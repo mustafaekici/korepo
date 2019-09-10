@@ -49,5 +49,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SocketWrapper\SocketWrapper.csproj">
+      <Project>{c1a674a3-1077-4f7a-a7ec-8c61f426f996}</Project>
+      <Name>SocketWrapper</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using SocketWrapper;
+using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -8,16 +7,18 @@ namespace ServerCore
 {
     public class TextServer : IServer
     {
-
-        Socket _listener;
+        ISocket _listener;
         Transmission _transmission;
         TextClient _textClient;
 
-        public TextServer(Transmission transmission)
+        public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
         {
             _transmission = transmission;
         }
-
+        public TextServer(ISocket socket,Transmission transmission)
+        {
+            _listener = socket;
+        }
         public string StartServer(int port, int maxConnections)
         {
             try
@@ -37,9 +38,10 @@ namespace ServerCore
                     return "Couldnt get local address.";
                 }
 
-                _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
-                _listener.Bind(new IPEndPoint(addresses[0].Address, port));
+               
+                //check null
+                
+                _listener.Bind(new IPEndPoint(addresses[0], port));
                 _listener.Listen(10);
 
                 _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
@@ -52,32 +54,31 @@ namespace ServerCore
 
         private void AcceptClient(IAsyncResult arg)
         {
-            try
-            {
-                _listener = (Socket)arg.AsyncState;
 
+                _listener = (SocketAdapter)arg.AsyncState;
+               
                 CreateSocketForClients(_listener.EndAccept(arg));
                 _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
-            }
-            catch (Exception) { }
         }
 
         private void CreateSocketForClients(Socket sockClient)
         {
-            //not thread safe!
-            _textClient = new TextClient(sockClient);
+            
+            _textClient = new TextClient(new SocketAdapter(sockClient));
 
             //todo: create clientlist for unblocked-blocked clients
 
             Byte[] byteDateLine = System.Text.Encoding.Unicode.GetBytes("Connected to server!");
-            _textClient.ReadOnlySocket.Send(byteDateLine, byteDateLine.Length, 0);
+            _textClient.GetSocket.Send(byteDateLine, byteDateLine.Length, 0);
             _textClient.SetupRecieveCallback();
         }
-
-         
+     
         protected internal static void OnRecievedData(IAsyncResult arg)
         {
-            //Send received data to all clients
+            TextClient client = (TextClient)arg.AsyncState;
+            byte[] aryRet = client.GetRecievedData(arg);
+            //send to all clients or single
+
         }
 
         public string StopServer()
@@ -99,15 +100,15 @@ namespace ServerCore
     {
         // To create a new socket for each client 
 
-        private Socket _newSocket;
+        private ISocket _newSocket;
         private byte[] buffer = new byte[50];
 
-        public TextClient(Socket passedSock)
+        public TextClient(ISocket passedSock)
         {
             _newSocket = passedSock;
         }
 
-        public Socket ReadOnlySocket
+        public ISocket GetSocket
         {
             get { return _newSocket; }
         }

@@ -10,7 +10,13 @@ namespace Server
     {
         static void Main(string[] args)
         {
-            
+
+            var t = new ServerCore.TextServer(ServerCore.Transmission.MultiCast);
+            var res = t.StartServer(1232,9);
+            Console.WriteLine(res);
+            Console.WriteLine("exit:");
+
+            Console.ReadKey();
         }
     }
 }

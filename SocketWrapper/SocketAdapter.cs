@@ -9,11 +9,14 @@ namespace SocketWrapper
     public class SocketAdapter : ISocket
     {
         private Socket _socket;
+
         public Socket Socket
         {
             get { return _socket; }
             set { _socket = value; }
         }
+
+        public bool Blocking { get =>_socket.Blocking; set => _socket.Blocking=value; }
 
         public SocketAdapter()
         {

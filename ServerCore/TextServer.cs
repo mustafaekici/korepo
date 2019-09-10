@@ -9,15 +9,16 @@ namespace ServerCore
     {
         ISocket _listener;
         Transmission _transmission;
-        TextClient _textClient;
+        TextClientPackage _textClient;
 
         public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
         {
-            _transmission = transmission;
+          
         }
         public TextServer(ISocket socket,Transmission transmission)
         {
             _listener = socket;
+            _transmission = transmission;
         }
         public string StartServer(int port, int maxConnections)
         {
@@ -64,7 +65,7 @@ namespace ServerCore
         private void CreateSocketForClients(Socket sockClient)
         {
             
-            _textClient = new TextClient(new SocketAdapter(sockClient));
+            _textClient = new TextClientPackage(new SocketAdapter(sockClient));
 
             //todo: create clientlist for unblocked-blocked clients
 
@@ -75,7 +76,7 @@ namespace ServerCore
      
         protected internal static void OnRecievedData(IAsyncResult arg)
         {
-            TextClient client = (TextClient)arg.AsyncState;
+            TextClientPackage client = (TextClientPackage)arg.AsyncState;
             byte[] aryRet = client.GetRecievedData(arg);
             //send to all clients or single
 
@@ -96,14 +97,14 @@ namespace ServerCore
 
        
     }
-    internal class TextClient
+    internal class TextClientPackage
     {
         // To create a new socket for each client 
 
         private ISocket _newSocket;
         private byte[] buffer = new byte[50];
 
-        public TextClient(ISocket passedSock)
+        public TextClientPackage(ISocket passedSock)
         {
             _newSocket = passedSock;
         }

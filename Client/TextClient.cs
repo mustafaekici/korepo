@@ -51,7 +51,7 @@ namespace Client
             var sock = (SocketAdapter)arg.AsyncState;
             int nBytesRec = sock.EndReceive(arg);
             string sRecieved = Encoding.Unicode.GetString(buffer, 0, nBytesRec);
-            Console.WriteLine(sRecieved);
+            Console.WriteLine(sRecieved); //Todo: event handler
             SetupRecieveCallback(sock);
         }
 

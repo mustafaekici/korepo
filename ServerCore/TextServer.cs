@@ -1,5 +1,6 @@
 ﻿using SocketWrapper;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 
@@ -10,12 +11,12 @@ namespace ServerCore
         ISocket _listener;
         Transmission _transmission;
         TextClientPackage _textClient;
-
+        internal List<TextClientPackage> connectedClients { get; set; }
         public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
         {
-          
+            connectedClients = new List<TextClientPackage>();
         }
-        public TextServer(ISocket socket,Transmission transmission)
+        public TextServer(ISocket socket, Transmission transmission)
         {
             _listener = socket;
             _transmission = transmission;
@@ -39,9 +40,9 @@ namespace ServerCore
                     return "Couldnt get local address.";
                 }
 
-               
+
                 //check null
-                
+
                 _listener.Bind(new IPEndPoint(addresses[0], port));
                 _listener.Listen(10);
 
@@ -56,24 +57,25 @@ namespace ServerCore
         private void AcceptClient(IAsyncResult arg)
         {
 
-                _listener = (SocketAdapter)arg.AsyncState;
-               
-                CreateSocketForClients(_listener.EndAccept(arg));
-                _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
+            _listener = (SocketAdapter)arg.AsyncState;
+            CreateSocketForClients(_listener.EndAccept(arg));
+            _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
         }
 
         private void CreateSocketForClients(Socket sockClient)
         {
-            
+            //Crete socket package for client
             _textClient = new TextClientPackage(new SocketAdapter(sockClient));
+            //add to client list
+            connectedClients.Add(_textClient);
 
             //todo: create clientlist for unblocked-blocked clients
 
-            Byte[] byteDateLine = System.Text.Encoding.Unicode.GetBytes("Connected to server!");
-            _textClient.GetSocket.Send(byteDateLine, byteDateLine.Length, 0);
+            byte[] info = System.Text.Encoding.Unicode.GetBytes("Connected to server!");
+            _textClient.GetSocket.Send(info, info.Length, 0);
             _textClient.SetupRecieveCallback();
         }
-     
+
         protected internal static void OnRecievedData(IAsyncResult arg)
         {
             TextClientPackage client = (TextClientPackage)arg.AsyncState;
@@ -95,7 +97,7 @@ namespace ServerCore
 
         }
 
-       
+
     }
     internal class TextClientPackage
     {

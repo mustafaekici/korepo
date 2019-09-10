@@ -18,6 +18,10 @@ namespace SocketWrapper
 
         public bool Blocking { get =>_socket.Blocking; set => _socket.Blocking=value; }
 
+        public EndPoint RemoteEndPoint =>_socket.RemoteEndPoint;
+
+        public int ReceiveTimeout { get => _socket.ReceiveTimeout; set =>_socket.ReceiveTimeout=value; }
+
         public SocketAdapter()
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -86,5 +90,7 @@ namespace SocketWrapper
         {
             throw new NotImplementedException();
         }
+
+      
     }
 }

@@ -10,6 +10,8 @@ namespace SocketWrapper
     public interface ISocket
     {
         bool Blocking { get; set; }
+        EndPoint RemoteEndPoint { get; }
+        int ReceiveTimeout { get; set; }
 
         void Bind(EndPoint localEP);
         void Listen(int backlog);
@@ -23,5 +25,6 @@ namespace SocketWrapper
         int Receive(byte[] buffer, int size, SocketFlags flags);
         int Send(byte[] buffer, int size, SocketFlags flags);
         void Shutdown(SocketShutdown how);
+     
     }
 }

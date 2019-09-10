@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace ServerCore
 {
@@ -11,6 +12,9 @@ namespace ServerCore
         ISocket _listener;
         Transmission _transmission;
         TextClientPackage _textClient;
+        static DateTime firstTime;
+        static DateTime lastTime = DateTime.Now;
+
         internal List<TextClientPackage> connectedClients { get; set; }
         public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
         {
@@ -71,16 +75,36 @@ namespace ServerCore
 
             //todo: create clientlist for unblocked-blocked clients
 
-            byte[] info = System.Text.Encoding.Unicode.GetBytes("Connected to server!");
+            byte[] info = System.Text.Encoding.Unicode.GetBytes("Connected to server!...\nClients in the Room:");
             _textClient.GetSocket.Send(info, info.Length, 0);
+
+            foreach (var item in connectedClients)
+            {
+                byte[] endpoint = System.Text.Encoding.Unicode.GetBytes(item.GetSocket.RemoteEndPoint.ToString());
+                _textClient.GetSocket.Send(endpoint, endpoint.Length, 0);
+            }
             _textClient.SetupRecieveCallback();
         }
 
         protected internal static void OnRecievedData(IAsyncResult arg)
         {
+            firstTime = DateTime.Now;
+            var timeres = (firstTime - lastTime).TotalSeconds;
             TextClientPackage client = (TextClientPackage)arg.AsyncState;
-            byte[] aryRet = client.GetRecievedData(arg);
-            //send to all clients or single
+            if (timeres > 10)
+            {
+                client = (TextClientPackage)arg.AsyncState;
+                string aryRet = client.GetRecievedData(arg);
+                //send to all clients or single
+                //lock list
+
+            }
+            else
+            {
+                //TODO : Warn Client, close connection
+            }
+            client.SetupRecieveCallback();
+            lastTime = firstTime;
 
         }
 
@@ -118,27 +142,41 @@ namespace ServerCore
 
         public void SetupRecieveCallback()
         {
+
             try
             {
                 AsyncCallback recieveData = new AsyncCallback(TextServer.OnRecievedData);
-                _newSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, recieveData, this);
+
+                var timeout = _newSocket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, recieveData, this);
+                bool intime = timeout.AsyncWaitHandle.WaitOne(10000, true);
+                //if(!intime)
+                //{
+                //    //TODO
+                //}
 
             }
             catch (Exception)
             {
             }
         }
-        public byte[] GetRecievedData(IAsyncResult arg)
+        public string GetRecievedData(IAsyncResult arg)
         {
-            int nBytesRec = 0;
-            try
+
+            string sRecieved;
+            int nBytesRec = _newSocket.EndReceive(arg);
+            if (nBytesRec > 0)
             {
-                nBytesRec = _newSocket.EndReceive(arg);
+                sRecieved = Encoding.Unicode.GetString(buffer, 0, nBytesRec);
             }
-            catch { }
-            byte[] byReturn = new byte[nBytesRec];
-            Array.Copy(buffer, byReturn, nBytesRec);
-            return byReturn;
+            else
+            {
+                sRecieved = null;
+                _newSocket.Shutdown(SocketShutdown.Both);
+                _newSocket.Close();
+            }
+
+            return sRecieved;
+
         }
 
     }

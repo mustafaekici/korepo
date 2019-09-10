@@ -25,10 +25,10 @@ namespace Client
             _listener = socket;
         }
 
-        public void StartClient()
+        public void StartClient(string serverIp, int port)
         {
 
-            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("10.0.75.1"), 1232);
+            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), port);
             _listener.Blocking = false;
 
             _listener.BeginConnect(serverEndPoint, new AsyncCallback(OnConnect), _listener);
@@ -37,7 +37,7 @@ namespace Client
         public void Sendmessage(string msg)
         {
             Byte[] byteDateLine = Encoding.Unicode.GetBytes(msg);
-            _listener.Send(byteDateLine, byteDateLine.Length, 0);
+            int result = _listener.Send(byteDateLine, byteDateLine.Length, 0);
         }
 
         public void OnConnect(IAsyncResult arg)

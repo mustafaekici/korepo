@@ -18,9 +18,9 @@ namespace Client
            
             ConsoleKeyInfo k;
             
-            Console.WriteLine("Usage:\nPress ESC to exit\nSelect Ip address to send message\nType All to send message all client");
+            Console.WriteLine("Select Ip address to send message");
             var client = new TextClient();
-            client.StartClient("10.0.75.1", 1232);
+            client.StartClient("10.0.75.1", 1232); //Todo : get ip and port from console.
 
             string selectedClientip = Console.ReadLine();
             Console.WriteLine("Conversation started with " + selectedClientip);
@@ -36,8 +36,7 @@ namespace Client
                 }
                 else
                 {
-                    client.Sendmessage(selectedClientip + "_" + message);
-                    Console.WriteLine("Send => "+selectedClientip);
+                    client.Sendmessage(selectedClientip + "_" + message);      
                 }
             }
 

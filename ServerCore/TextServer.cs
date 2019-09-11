@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-
+using System.Linq;
 namespace ServerCore
 {
     public class TextServer : IServer
@@ -15,7 +15,7 @@ namespace ServerCore
         static DateTime firstTime;
         static DateTime lastTime = DateTime.Now;
 
-        internal List<TextClientPackage> connectedClients { get; set; }
+        internal static List<TextClientPackage> connectedClients { get; set; }
         public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
         {
             connectedClients = new List<TextClientPackage>();
@@ -52,7 +52,7 @@ namespace ServerCore
 
                 _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
 
-                return ("Listening On Port " + port);
+                return ($"Listening On: {addresses[0]} : {port}");
 
             }
             catch (Exception ex) { return ex.Message; }
@@ -72,17 +72,29 @@ namespace ServerCore
             _textClient = new TextClientPackage(new SocketAdapter(sockClient));
             //add to client list
             connectedClients.Add(_textClient);
-
+            //todo: lock list first, not thread safe
             //todo: create clientlist for unblocked-blocked clients
 
             byte[] info = System.Text.Encoding.Unicode.GetBytes("Connected to server!...\nClients in the Room:");
             _textClient.GetSocket.Send(info, info.Length, 0);
 
+
             foreach (var item in connectedClients)
             {
-                byte[] endpoint = System.Text.Encoding.Unicode.GetBytes(item.GetSocket.RemoteEndPoint.ToString());
-                _textClient.GetSocket.Send(endpoint, endpoint.Length, 0);
+                //send connected clients except newbie info to newbie
+                if (item.GetSocket.RemoteEndPoint.ToString() != _textClient.GetSocket.RemoteEndPoint.ToString())
+                {
+                    byte[] endpoint = System.Text.Encoding.Unicode.GetBytes(item.GetSocket.RemoteEndPoint.ToString() + "\n");
+                    _textClient.GetSocket.Send(endpoint, endpoint.Length, 0);
+                }
+                //and send newbie info to all clients except newbie
+                if (item.GetSocket.RemoteEndPoint.ToString() != _textClient.GetSocket.RemoteEndPoint.ToString())
+                {
+                    byte[] connectedclientinfo = System.Text.Encoding.Unicode.GetBytes(_textClient.GetSocket.RemoteEndPoint.ToString() + " Connected to server!");
+                    item.GetSocket.Send(connectedclientinfo, connectedclientinfo.Length, 0);
+                }
             }
+
             _textClient.SetupRecieveCallback();
         }
 
@@ -95,9 +107,15 @@ namespace ServerCore
             {
                 client = (TextClientPackage)arg.AsyncState;
                 string aryRet = client.GetRecievedData(arg);
-                //send to all clients or single
-                //lock list
 
+                //send to all clients or single
+
+                var clientip = string.Concat(aryRet.TakeWhile(x => x != '_'));
+                var clientmsg = string.Concat(aryRet.SkipWhile(x => x != '_')).Remove(0, 1);
+                var sendto = connectedClients.Where(x => x.GetSocket.RemoteEndPoint.ToString() == clientip).FirstOrDefault();
+
+                var bytedata = System.Text.Encoding.Unicode.GetBytes(client.GetSocket.RemoteEndPoint.ToString() + "said: " + clientmsg);
+                sendto?.GetSocket.Send(bytedata, bytedata.Length, 0);
             }
             else
             {
@@ -178,6 +196,5 @@ namespace ServerCore
             return sRecieved;
 
         }
-
     }
 }

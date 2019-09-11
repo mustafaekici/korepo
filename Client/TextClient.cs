@@ -27,13 +27,26 @@ namespace Client
 
         public void StartClient(string serverIp, int port)
         {
-
+            var myip = GetMyIp();
             IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), port);
             _listener.Blocking = false;
 
             _listener.BeginConnect(serverEndPoint, new AsyncCallback(OnConnect), _listener);
         }
-
+        private string GetMyIp()
+        {
+            IPHostEntry host;
+            string localIP = "?";
+            host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (IPAddress ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    localIP = ip.ToString();
+                }
+            }
+            return localIP;
+        }
         public void Sendmessage(string msg)
         {
             Byte[] byteDateLine = Encoding.Unicode.GetBytes(msg);

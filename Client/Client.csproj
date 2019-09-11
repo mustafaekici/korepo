@@ -51,5 +51,15 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ServerCore\ServerCore.csproj">
+      <Project>{a4a3d9ef-0745-4f49-94f0-c0b815d439c8}</Project>
+      <Name>ServerCore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SocketWrapper\SocketWrapper.csproj">
+      <Project>{507d070d-a995-4142-98f5-5d50fc24eb8a}</Project>
+      <Name>SocketWrapper</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

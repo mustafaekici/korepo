@@ -7,13 +7,14 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Client
+namespace ClientConnection
 {
-    public class TextClient
+    public class TextClient : IDisposable
     {
 
         ISocket _listener;
         byte[] buffer = new byte[2048];
+        public event Action<string> OnMessageReceived;
 
         public TextClient() : this(new SocketAdapter())
         {
@@ -27,26 +28,12 @@ namespace Client
 
         public void StartClient(string serverIp, int port)
         {
-            var myip = GetMyIp();
             IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIp), port);
             _listener.Blocking = false;
 
             _listener.BeginConnect(serverEndPoint, new AsyncCallback(OnConnect), _listener);
         }
-        private string GetMyIp()
-        {
-            IPHostEntry host;
-            string localIP = "?";
-            host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (IPAddress ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    localIP = ip.ToString();
-                }
-            }
-            return localIP;
-        }
+ 
         public void Sendmessage(string msg)
         {
             Byte[] byteDateLine = Encoding.Unicode.GetBytes(msg);
@@ -63,8 +50,8 @@ namespace Client
         {
             var sock = (SocketAdapter)arg.AsyncState;
             int nBytesRec = sock.EndReceive(arg);
-            string sRecieved = Encoding.Unicode.GetString(buffer, 0, nBytesRec);
-            Console.WriteLine(sRecieved); //Todo: event handler
+            string sRecieved = Encoding.Unicode.GetString(buffer, 0, nBytesRec);         
+            OnMessageReceived?.Invoke(sRecieved);
             SetupRecieveCallback(sock);
         }
 
@@ -74,5 +61,19 @@ namespace Client
             AsyncCallback recieveData = new AsyncCallback(OnRecievedData);
             sock.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, recieveData, sock);
         }
+
+
+
+        #region IDisposable Member
+
+        public void Dispose()
+        {
+            if (_listener != null)
+            {
+                _listener.Close();
+            }
+        }
+
+        #endregion
     }
 }

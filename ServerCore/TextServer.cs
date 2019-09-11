@@ -14,17 +14,19 @@ namespace ServerCore
         TextClientPackage _textClient;
         static DateTime firstTime;
         static DateTime lastTime = DateTime.Now;
-
+      
         internal static List<TextClientPackage> connectedClients { get; set; }
         public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
         {
             connectedClients = new List<TextClientPackage>();
         }
+
         public TextServer(ISocket socket, Transmission transmission)
         {
             _listener = socket;
             _transmission = transmission;
         }
+
         public string StartServer(int port, int maxConnections)
         {
             try
@@ -72,7 +74,7 @@ namespace ServerCore
             _textClient = new TextClientPackage(new SocketAdapter(sockClient));
             //add to client list
             connectedClients.Add(_textClient);
-            //todo: lock list first, not thread safe
+         
             //todo: create clientlist for unblocked-blocked clients
 
             byte[] info = System.Text.Encoding.Unicode.GetBytes("Connected to server!...\nClients in the Room:");
@@ -114,12 +116,16 @@ namespace ServerCore
                 var clientmsg = string.Concat(aryRet.SkipWhile(x => x != '_')).Remove(0, 1);
                 var sendto = connectedClients.Where(x => x.GetSocket.RemoteEndPoint.ToString() == clientip).FirstOrDefault();
 
-                var bytedata = System.Text.Encoding.Unicode.GetBytes(client.GetSocket.RemoteEndPoint.ToString() + "said: " + clientmsg);
+                var bytedata = System.Text.Encoding.Unicode.GetBytes(client.GetSocket.RemoteEndPoint.ToString() + "says : " + clientmsg);
                 sendto?.GetSocket.Send(bytedata, bytedata.Length, 0);
             }
             else
             {
-                //TODO : Warn Client, close connection
+                //Warn Client
+                var warninfo = System.Text.Encoding.Unicode.GetBytes("Server: You cant send more than one msg per sec");  
+                client.GetSocket.Send(warninfo, warninfo.Length, 0);
+
+                //Todo: create blacklist to kick client. close connection  client.GetSocket.Close();
             }
             client.SetupRecieveCallback();
             lastTime = firstTime;

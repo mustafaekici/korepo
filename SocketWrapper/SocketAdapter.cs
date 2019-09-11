@@ -88,7 +88,7 @@ namespace SocketWrapper
 
         public void Shutdown(SocketShutdown how)
         {
-            throw new NotImplementedException();
+            _socket.Shutdown(how);
         }
 
       

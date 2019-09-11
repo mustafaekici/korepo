@@ -1,12 +1,5 @@
-﻿using SocketWrapper;
+﻿using ClientConnection;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -15,20 +8,23 @@ namespace Client
          
         static void Main(string[] args)
         {
-           
-            ConsoleKeyInfo k;
-            
+
+            Console.Write("Enter server ip:");
+            var serverip = Console.ReadLine();
+            Console.Write("Enter port number:");
+            var port = Console.ReadLine();
+
             Console.WriteLine("Select Ip address to send message");
             var client = new TextClient();
-            client.StartClient("10.0.75.1", 1232); //Todo : get ip and port from console.
+            client.StartClient(serverip, int.Parse(port)); 
+            client.OnMessageReceived += Client_OnMessageReceived;
 
             string selectedClientip = Console.ReadLine();
             Console.WriteLine("Conversation started with " + selectedClientip);
           
-
             while (true)
             {
-                Console.Write("You:");
+              
                 string message = Console.ReadLine();
                 if (selectedClientip == "All")
                 {
@@ -41,8 +37,11 @@ namespace Client
             }
 
         }
-     
 
+        private static void Client_OnMessageReceived(string message)
+        {
+            Console.WriteLine(message);
+        }
     }
     
 }

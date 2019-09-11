@@ -16,7 +16,15 @@ namespace Client
 
             Console.WriteLine("Select Ip address to send message");
             var client = new TextClient();
-            client.StartClient(serverip, int.Parse(port)); 
+            try
+            {
+                client.StartClient(serverip, int.Parse(port));
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
             client.OnMessageReceived += Client_OnMessageReceived;
 
             string selectedClientip = Console.ReadLine();

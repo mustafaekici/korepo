@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DnsAdapter.cs" />
+    <Compile Include="IDns.cs" />
     <Compile Include="ISocket.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SocketAdapter.cs" />

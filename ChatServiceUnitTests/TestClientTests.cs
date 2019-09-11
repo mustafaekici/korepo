@@ -49,6 +49,14 @@ namespace ChatServiceUnitTests
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void StartClient_PortLessThen0_Throws()
+        {
+            var textclient = new TextClient();
+            textclient.StartClient("10.10.0.0", -23);
+        }
+
+        [TestMethod]
         public void SendMessage_EmptyMessage_WontSend()
         {
             var socketmock = Substitute.For<ISocket>();

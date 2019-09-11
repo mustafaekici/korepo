@@ -6,7 +6,7 @@ namespace ServerCore
 {
     interface IServer
     {
-        string StartServer(int port, int maxConnections);
+        string StartServer(int port);
         string StopServer();
     }
 }

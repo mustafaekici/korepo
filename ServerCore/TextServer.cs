@@ -9,55 +9,60 @@ namespace ServerCore
 {
     public class TextServer : IServer
     {
+
         ISocket _listener;
-        Transmission _transmission;
+        IDns _dns;
         TextClientPackage _textClient;
-        static DateTime firstTime;
-        static DateTime lastTime = DateTime.Now;
-      
+        public static DateTime firstTime;
+        public static DateTime lastTime = DateTime.Now;
+
         internal static List<TextClientPackage> connectedClients { get; set; }
-        public TextServer(Transmission transmission) : this(new SocketAdapter(), transmission)
+        public TextServer() : this(new SocketAdapter(), new DnsAdapter())
         {
             connectedClients = new List<TextClientPackage>();
         }
 
-        public TextServer(ISocket socket, Transmission transmission)
+        public TextServer(ISocket socket, IDns dns)
         {
+            if (socket == null)
+                throw new ArgumentNullException();
+
+            if (dns == null)
+                throw new ArgumentNullException();
+
             _listener = socket;
-            _transmission = transmission;
+            _dns = dns;
         }
 
-        public string StartServer(int port, int maxConnections)
+        public string StartServer(int port)
         {
+
+            IPAddress[] addresses = null;
+            string serverHostName = "";
+            IPHostEntry ipEntry;
+
             try
             {
-                IPAddress[] addresses = null;
-                string serverHostName = "";
-                try
-                {
-                    serverHostName = Dns.GetHostName();
-                    IPHostEntry ipEntry = Dns.GetHostByName(serverHostName);
-                    addresses = ipEntry.AddressList;
-                }
-                catch (Exception) { }
-
-                if (addresses == null || addresses.Length < 1)
-                {
-                    return "Couldnt get local address.";
-                }
-
-
-                //check null
-
-                _listener.Bind(new IPEndPoint(addresses[0], port));
-                _listener.Listen(10);
-
-                _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
-
-                return ($"Listening On: {addresses[0]} : {port}");
-
+                serverHostName = _dns.GetHostName();
+                ipEntry = _dns.GetHostByName(serverHostName);
             }
-            catch (Exception ex) { return ex.Message; }
+            catch(Exception ex)
+            {
+                return ex.Message;
+            }
+    
+            addresses = ipEntry.AddressList;
+            if (addresses == null || addresses.Length < 1)
+            {
+                return "Couldnt get local address.";
+            }
+
+            _listener.Bind(new IPEndPoint(addresses[0], port));
+            _listener.Listen(10);
+            _listener.BeginAccept(new AsyncCallback(AcceptClient), _listener);
+
+            return ($"Listening On: {addresses[0]} : {port}");
+
         }
 
         private void AcceptClient(IAsyncResult arg)
@@ -74,12 +79,11 @@ namespace ServerCore
             _textClient = new TextClientPackage(new SocketAdapter(sockClient));
             //add to client list
             connectedClients.Add(_textClient);
-         
+
             //todo: create clientlist for unblocked-blocked clients
 
             byte[] info = System.Text.Encoding.Unicode.GetBytes("Connected to server!...\nClients in the Room:");
             _textClient.GetSocket.Send(info, info.Length, 0);
-
 
             foreach (var item in connectedClients)
             {
@@ -100,12 +104,12 @@ namespace ServerCore
             _textClient.SetupRecieveCallback();
         }
 
-        protected internal static void OnRecievedData(IAsyncResult arg)
+        public static void OnRecievedData(IAsyncResult arg)
         {
             firstTime = DateTime.Now;
             var timeres = (firstTime - lastTime).TotalSeconds;
             TextClientPackage client = (TextClientPackage)arg.AsyncState;
-            if (timeres > 10)
+            if (timeres > 1)
             {
                 client = (TextClientPackage)arg.AsyncState;
                 string aryRet = client.GetRecievedData(arg);
@@ -122,7 +126,7 @@ namespace ServerCore
             else
             {
                 //Warn Client
-                var warninfo = System.Text.Encoding.Unicode.GetBytes("Server: You cant send more than one msg per sec");  
+                var warninfo = System.Text.Encoding.Unicode.GetBytes("Server: You cant send more than one msg per sec");
                 client.GetSocket.Send(warninfo, warninfo.Length, 0);
 
                 //Todo: create blacklist to kick client. close connection  client.GetSocket.Close();
@@ -147,7 +151,7 @@ namespace ServerCore
 
 
     }
-    internal class TextClientPackage
+    public class TextClientPackage
     {
         // To create a new socket for each client 
 

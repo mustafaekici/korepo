@@ -44,7 +44,6 @@
     <Compile Include="IServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextServer.cs" />
-    <Compile Include="Transmission.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SocketWrapper\SocketWrapper.csproj">
